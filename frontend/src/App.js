@@ -1,5 +1,7 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+
+// 🧱 Admin Components
 import Navbar from "./components/Admin/Navbar";
 import Home from "./components/Admin/Home";
 import Stats from "./components/Admin/Stats";
@@ -7,14 +9,19 @@ import Opening from "./components/Admin/Opening";
 import Testimonials from "./components/Admin/Testimonials";
 import FAQ from "./components/Admin/Faq";
 import Footer from "./components/Admin/Footer";
-import WorkerDashboard from "./components/Worker/WorkerDashboard"; 
-import OwnerDashboard from "./components/Owner/OwnerDashboard";
+
+// 👷 Worker + Owner Components
+import WorkerDashboard from "./components/Worker/WorkerDashboard";
+import OwnerLayout from "./components/Owner/OwnerLayout";
+import JobManager from "./components/Owner/JobManager";
+import Analytics from "./components/Owner/Analytics";
+import ApplicationsPanel from "./components/Owner/ApplicationsPanel";
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Landing page route */}
+        {/* 🌐 Landing Page */}
         <Route
           path="/"
           element={
@@ -30,9 +37,17 @@ function App() {
           }
         />
 
-        {/* Worker Dashboard route */}
+        {/* 👷 Worker Dashboard */}
         <Route path="/workerDashboard" element={<WorkerDashboard />} />
-        <Route path="/ownerDashboard" element={<OwnerDashboard />} />
+
+        {/* 🧑‍💼 Owner Section with Sidebar */}
+        <Route element={<OwnerLayout />}>
+          {/* Redirect ownerDashboard -> jobs */}
+          <Route path="/ownerDashboard" element={<Navigate to="/owner/jobs" />} />
+          <Route path="/owner/jobs" element={<JobManager />} />
+          <Route path="/owner/analytics" element={<Analytics />} />
+          <Route path="/owner/applications" element={<ApplicationsPanel />} />
+        </Route>
       </Routes>
     </Router>
   );
