@@ -1,7 +1,12 @@
 package com.osi.shramsaathi.model;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "jobs")
@@ -18,6 +23,12 @@ public class Job {
     private Double pay;
     private String duration;
     private String status = "open";
+    private Integer pincode;
+    private String area;
+    private String colony;
+    private String state;
+    private Double latitude;
+    private Double longitude;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -69,6 +80,54 @@ public class Job {
     }
     public void setDuration(String duration) {
         this.duration = duration;
+    }
+
+    public Integer getPincode() {
+        return pincode;
+    }
+
+    public void setPincode(Integer pincode) {
+        this.pincode = pincode;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+
+    public String getColony() {
+        return colony;
+    }
+
+    public void setColony(String colony) {
+        this.colony = colony;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 
     public String getStatus() {

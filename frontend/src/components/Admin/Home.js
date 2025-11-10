@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import Popup from "./Popup";
+import { useState } from "react";
 import "./Home.css";
+import Popup from "./Popup";
 
 const Home = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -44,3 +44,5 @@ const Home = () => {
 };
 
 export default Home;
+
+

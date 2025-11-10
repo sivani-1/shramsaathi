@@ -1,7 +1,11 @@
 package com.osi.shramsaathi.dto;
 
-import jakarta.validation.constraints.*;
-import lombok.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -29,6 +33,9 @@ public class UserRequest {
 
     @NotNull(message = "Pincode is required")
     private Integer pincode;
+    private String area;
+    private String colony;
+    private String state;
 }
 // This is the UserRequest class, which is used to create a new user.
 // It uses Lombok to generate the getters, setters, constructor, and builder methods.

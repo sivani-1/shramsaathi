@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { jobService } from "../../services/jobService";
-import "./JobManager.css";
 import "./AddJobModal.css";
+import "./JobManager.css";
 
 
 const AddJobModal = ({ closeModal, onJobAdded }) => {
@@ -13,6 +13,10 @@ const AddJobModal = ({ closeModal, onJobAdded }) => {
     duration: "",
     ownerId: 1,
     status: "active",
+    area: "",
+    colony: "",
+    state: "",
+    pincode: "",
   });
 
   const handleChange = (e) => {
@@ -22,7 +26,11 @@ const AddJobModal = ({ closeModal, onJobAdded }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await jobService.addJob(form);
+  // Normalize numeric fields: pincode -> int
+      const payload = { ...form };
+      if (payload.pincode === "") delete payload.pincode; else payload.pincode = parseInt(payload.pincode);
+
+      await jobService.addJob(payload);
       onJobAdded();
       closeModal();
     } catch (err) {
@@ -55,6 +63,30 @@ const AddJobModal = ({ closeModal, onJobAdded }) => {
           value={form.location}
           onChange={handleChange}
           required
+        />
+        <input
+          name="area"
+          placeholder="Area / Locality (e.g. Banjara Hills)"
+          value={form.area}
+          onChange={handleChange}
+        />
+        <input
+          name="colony"
+          placeholder="Colony / Society (optional)"
+          value={form.colony}
+          onChange={handleChange}
+        />
+        <input
+          name="state"
+          placeholder="State (e.g. Telangana)"
+          value={form.state}
+          onChange={handleChange}
+        />
+        <input
+          name="pincode"
+          placeholder="Pincode / Postal Code (e.g. 500081)"
+          value={form.pincode}
+          onChange={handleChange}
         />
         <input
           name="pay"

@@ -1,14 +1,16 @@
 package com.osi.shramsaathi.service.impl;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.osi.shramsaathi.dto.UserRequest;
 import com.osi.shramsaathi.dto.UserResponse;
 import com.osi.shramsaathi.model.User;
 import com.osi.shramsaathi.repository.UserRepository;
 import com.osi.shramsaathi.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +30,10 @@ public class UserServiceImpl implements UserService {
                 .workType(request.getWorkType())
                 .district(request.getDistrict())
                 .mandal(request.getMandal())
-                .pincode(request.getPincode())
+        .pincode(request.getPincode())
+        .area(request.getArea())
+        .colony(request.getColony())
+        .state(request.getState())
                 .registered(true)
                 .build();
 
@@ -62,6 +67,9 @@ public class UserServiceImpl implements UserService {
                 .district(user.getDistrict())
                 .mandal(user.getMandal())
                 .pincode(user.getPincode())
+                .area(user.getArea())
+                .colony(user.getColony())
+                .state(user.getState())
                 .registered(user.getRegistered())
                 .build();
     }

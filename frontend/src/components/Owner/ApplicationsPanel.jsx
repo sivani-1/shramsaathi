@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
 import axios from "axios";
-import ChatModal from "../Worker/ChatModal"; // ✅ adjust path if needed
+import { useEffect, useState } from "react";
 import "./ApplicationsPanel.css";
+import Chat from "./Chat";
 
 const API_BASE = "http://localhost:8083/api";
 
@@ -150,10 +150,10 @@ const ApplicationsPanel = () => {
 
       {/* ✅ Chat Modal */}
       {openChatFor && (
-        <ChatModal
+        <Chat
           applicationId={openChatFor.id}
-          meId={1} // logged-in owner (temporary)
-          otherId={openChatFor.workerId}
+          ownerId={1} // logged-in owner (temporary)
+          workerId={openChatFor.workerId}
           onClose={() => setOpenChatFor(null)}
         />
       )}

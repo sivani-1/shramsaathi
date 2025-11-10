@@ -1,39 +1,48 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { chatService } from "../../services/chatService";
+import { subscribe } from "../../services/socketService";
 import "./ChatModal.css";
 
-const ChatModal = ({ applicationId, workerId, onClose }) => {
+const ChatModal = ({ applicationId, workerId, ownerId, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
-  // ✅ Fetch messages initially and refresh every 3s
-  const fetchMessages = async () => {
-    const data = await chatService.getMessages(applicationId);
-    setMessages(data);
-  };
-
   useEffect(() => {
-  const fetch = async () => await fetchMessages();
-  fetch();
+    const fetch = async () => {
+      const data = await chatService.getMessages(applicationId);
+      setMessages(data);
+    };
+    fetch();
 
-  const interval = setInterval(fetchMessages, 3000);
-  return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [applicationId]);
+    // Subscribe to real-time chat updates
+    const sub = subscribe(`/user/${applicationId}/queue/messages`, (msg) => {
+      const transformedMsg = {
+        ...msg,
+        message: msg.content
+      };
+      setMessages((prev) => [...prev, transformedMsg]);
+    });
+    return () => sub.unsubscribe();
+  }, [applicationId]);
 
   // ✅ Send new message
   const handleSend = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    await chatService.sendMessage({
-      applicationId,
-      senderId: workerId,
-      receiverId: 999, // 👈 placeholder for owner ID
-      message: newMessage,
-    });
+    try {
+      await chatService.sendMessage({
+        applicationId,
+        senderId: workerId,
+        receiverId: ownerId,
+        message: newMessage,
+        senderType: "WORKER",
+      });
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      alert('Failed to send message. Please try again.');
+    }
     setNewMessage("");
-    fetchMessages();
   };
 
   return (

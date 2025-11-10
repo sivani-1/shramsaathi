@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import OwnerLoginPopup from "./OwnerLoginPopup";
 import "./Popup.css";
 import WorkerLoginPopup from "./WorkerLoginPopup";
-import OwnerLoginPopup from "./OwnerLoginPopup";
 import API from "./api";
 const Popup = ({ onClose }) => {
   const [showWorkerForm, setShowWorkerForm] = useState(false);
@@ -199,3 +199,5 @@ const handleOwnerSubmit = async (e) => {
 };
 
 export default Popup;
+
+

@@ -1,6 +1,9 @@
 package com.osi.shramsaathi.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -16,6 +19,9 @@ public class UserResponse {
     private String mandal;
     private Integer pincode;
     private Boolean registered;
+    private String area;
+    private String colony;
+    private String state;
 }
 // This is the UserResponse class, which is used to send the user data to the client.
 // It uses Lombok to generate the getters, setters, constructor, and builder methods.

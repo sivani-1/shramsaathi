@@ -1,8 +1,17 @@
 package com.osi.shramsaathi.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "users")
@@ -36,6 +45,11 @@ public class User {
 
     @NotNull(message = "Pincode is required")
     private Integer pincode;
+
+    // New finer-grained address fields
+    private String area;
+    private String colony;
+    private String state;
 
     //  Use @Builder.Default so Lombok keeps the default value when using .builder()
     @Builder.Default
