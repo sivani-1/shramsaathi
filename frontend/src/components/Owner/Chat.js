@@ -15,13 +15,10 @@ const Chat = ({ applicationId, ownerId, workerId, onClose }) => {
     };
     fetch();
 
-    // Subscribe to real-time chat updates
-    const sub = subscribe(`/user/${applicationId}/queue/messages`, (msg) => {
-      const transformedMsg = {
-        ...msg,
-        message: msg.content
-      };
-      setMessages((prev) => [...prev, transformedMsg]);
+    // Subscribe to real-time chat updates (topic per application)
+    const sub = subscribe(`/topic/chat/${applicationId}`, (msg) => {
+      // message shape from server should already match { applicationId, senderId, receiverId, message, sentAt }
+      setMessages((prev) => [...prev, msg]);
     });
     return () => sub.unsubscribe();
   }, [applicationId]);

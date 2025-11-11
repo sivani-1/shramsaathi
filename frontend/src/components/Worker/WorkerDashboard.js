@@ -8,7 +8,9 @@ import "./WorkerDashboard.css";
 const API_BASE = "http://localhost:8083/api";
 
 const WorkerDashboard = () => {
-  const workerId = 1; // ⚠️ Replace with actual logged-in workerId later
+  // workerId should come from auth/session. Make it stateful so we can set it
+  // after creating/saving the profile. Initially null until known.
+  const [workerId, setWorkerId] = useState(null);
 
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -22,6 +24,8 @@ const WorkerDashboard = () => {
     colony: "",
     state: "",
     pincode: "500081",
+    age: "",
+    experienceYears: "",
   });
 
   const [activeTab, setActiveTab] = useState("jobs");
@@ -94,36 +98,96 @@ const WorkerDashboard = () => {
     }
   };
 
-  // ✅ Fetch all jobs
+  // ✅ Fetch all jobs and enrich with owner information
+  const fetchJobs = async () => {
+    try {
+      const jobsRes = await axios.get(`${API_BASE}/jobs`);
+
+      // If workerId is known, fetch applications for this worker; otherwise assume none
+      let applicationsRes = { data: [] };
+      if (workerId) {
+        try {
+          applicationsRes = await axios.get(`${API_BASE}/applications/worker/${workerId}`);
+        } catch (e) {
+          console.warn('Failed to fetch worker applications (will assume none):', e);
+          applicationsRes = { data: [] };
+        }
+      }
+
+      // Mark which jobs worker has already applied to
+      const appliedIds = new Set((applicationsRes.data || []).map(app => app.jobId));
+      setAppliedJobs(appliedIds);
+
+      // Enrich jobs with application status
+      const enrichedJobs = jobsRes.data.map(job => ({
+        ...job,
+        alreadyApplied: appliedIds.has(job.id),
+        applicationStatus: applicationsRes.data.find(app => app.jobId === job.id)?.status || null
+      }));
+
+      setJobs(enrichedJobs);
+    } catch (err) {
+      console.error('Failed to fetch jobs:', err);
+      setMessage('⚠️ Failed to load jobs. Please try again.');
+      setTimeout(() => setMessage(""), 3000);
+    }
+  };
+
   useEffect(() => {
-    axios.get(`${API_BASE}/jobs`).then((res) => setJobs(res.data));
+    fetchJobs();
     // connect websocket once
     try { wsConnect(); } catch (e) {}
   }, []);
 
-  // ✅ Fetch worker applications
+  // Re-fetch jobs when workerId becomes available so applied flags are correct
+  useEffect(() => {
+    if (workerId) fetchJobs();
+  }, [workerId]);
+
+  // ✅ Fetch worker applications with full owner information
   const fetchApplications = async () => {
     try {
-      // Get applications
-      const res = await axios.get(`${API_BASE}/applications/worker/${workerId}`);
+      if (!workerId) {
+        setApplications([]);
+        setMessage("⚠️ Save your profile first so applications can be linked to your account.");
+        setTimeout(() => setMessage(""), 3000);
+        return;
+      }
+
+      // Get applications and jobs in parallel for efficiency
+      const [applicationsRes, jobsRes] = await Promise.all([
+        axios.get(`${API_BASE}/applications/worker/${workerId}`),
+        axios.get(`${API_BASE}/jobs`)
+      ]);
       
-      // Get all relevant jobs to get owner information
-      const jobsResponse = await axios.get(`${API_BASE}/jobs`);
+      // Create a lookup of jobs by ID for efficient access
       const jobsById = {};
-      jobsResponse.data.forEach(job => {
+      jobsRes.data.forEach(job => {
         jobsById[job.id] = job;
       });
 
-      // Combine application data with job data
-      const enrichedApplications = res.data.map(app => ({
-        ...app,
-        ownerId: jobsById[app.jobId]?.ownerId || null,
-        jobTitle: jobsById[app.jobId]?.title || `Job #${app.jobId}`
-      }));
+      // Combine application data with complete job and owner data
+      const enrichedApplications = applicationsRes.data.map(app => {
+        const relatedJob = jobsById[app.jobId] || {};
+        return {
+          ...app,
+          jobTitle: relatedJob.title || `Job #${app.jobId}`,
+          location: relatedJob.location || app.location || 'Unknown Location',
+          pay: relatedJob.pay || app.pay || 'Pay not specified',
+          // Complete owner information from the job
+          ownerId: relatedJob.ownerId,
+          ownerName: relatedJob.ownerName,
+          ownerPincode: relatedJob.pincode,
+          ownerArea: relatedJob.area,
+          ownerColony: relatedJob.colony,
+          ownerState: relatedJob.state
+        };
+      });
 
+      console.log("Enriched Applications with owner info:", enrichedApplications); // For debugging
       setApplications(enrichedApplications);
 
-      // Mark already applied job IDs
+      // Update applied jobs set
       const appliedIds = new Set(enrichedApplications.map((app) => app.jobId));
       setAppliedJobs(appliedIds);
     } catch (err) {
@@ -141,6 +205,16 @@ const WorkerDashboard = () => {
   // ✅ Apply for a job (protected against duplicates)
   const handleApply = async (job) => {
     try {
+      // Ensure worker has a backend id. If not, save profile first.
+      if (!workerId) {
+        const savedId = await handleProfileSave();
+        if (!savedId) {
+          setMessage('⚠️ Please save your profile before applying.');
+          setTimeout(() => setMessage(''), 3000);
+          return;
+        }
+      }
+
       const response = await axios.post(`${API_BASE}/applications`, {
         jobId: job.id,
         workerId,
@@ -148,6 +222,9 @@ const WorkerDashboard = () => {
         workerSkill: workerProfile.skill,
         status: "pending",
       });
+
+      // Debug: log server response for apply action
+      console.log('POST /api/applications response:', response && response.data ? response.data : response);
 
       setMessage(response.data.message || "✅ Applied successfully!");
       setAppliedJobs((prev) => new Set(prev.add(job.id)));
@@ -183,11 +260,18 @@ const WorkerDashboard = () => {
         area: workerProfile.area || "",
         colony: workerProfile.colony || "",
         state: workerProfile.state || "",
+        age: workerProfile.age ? parseInt(String(workerProfile.age), 10) : null,
+        experienceYears: workerProfile.experienceYears ? parseInt(String(workerProfile.experienceYears), 10) : null,
       };
 
       const res = await axios.post(`${API_BASE}/users`, payload);
       if (res && res.data) {
         setMessage("✅ Profile saved to server.");
+        // If backend returned an id, use it as workerId for future actions
+        if (res.data.id) {
+          setWorkerId(res.data.id);
+          return res.data.id;
+        }
       } else {
         setMessage("✅ Profile updated locally.");
       }
@@ -198,6 +282,7 @@ const WorkerDashboard = () => {
     }
 
     setTimeout(() => setMessage(""), 3000);
+    return null;
   };
 
   // Start sharing worker's browser geolocation to the backend via STOMP
@@ -297,28 +382,42 @@ const WorkerDashboard = () => {
                   <th>Location</th>
                   <th>Pay</th>
                   <th>Duration</th>
-                  <th></th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {jobs.map((job) => (
-                  <tr key={job.id}>
+                  <tr key={job.id} className={job.alreadyApplied ? "applied-row" : ""}>
                     <td>{job.title}</td>
                     <td>{job.skillNeeded}</td>
-                    <td>{job.location}</td>
-                    <td>{job.pay}</td>
-                    <td>{job.duration}</td>
                     <td>
-                      {appliedJobs.has(job.id) ? (
+                      {job.location}
+                      {job.area && <div className="location-detail">Area: {job.area}</div>}
+                      {job.colony && <div className="location-detail">Colony: {job.colony}</div>}
+                    </td>
+                    <td>₹{job.pay}</td>
+                    <td>{job.duration} days</td>
+                    <td>
+                      {job.alreadyApplied ? (
+                        <span className={`status ${job.applicationStatus?.toLowerCase()}`}>
+                          {job.applicationStatus}
+                        </span>
+                      ) : (
+                        <span className="status available">Available</span>
+                      )}
+                    </td>
+                    <td>
+                      {job.alreadyApplied ? (
                         <button className="applied-btn" disabled>
-                          ✅ Applied
+                          ✅ Already Applied
                         </button>
                       ) : (
                         <button
                           className="apply-btn"
                           onClick={() => handleApply(job)}
                         >
-                          Apply
+                          Apply Now
                         </button>
                       )}
                       {/* Show route button: uses job.pincode (owner) and workerProfile.pincode to geocode and show route */}
@@ -427,11 +526,12 @@ const WorkerDashboard = () => {
                     </td>
                     <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
                     <td>
-                      {app.status.toLowerCase() === "accepted" && (
-                        <>
+                      {app.status && app.status.toLowerCase() === "accepted" && (
+                        <div className="action-buttons">
                           <button
-                            className="apply-btn"
+                            className="chat-btn"
                             onClick={() => {
+                              console.log("Opening chat for application:", app); // For debugging
                               if (!app.ownerId) {
                                 setMessage("⚠️ Unable to start chat - This job's owner information is not available");
                                 setTimeout(() => setMessage(""), 3000);
@@ -439,8 +539,9 @@ const WorkerDashboard = () => {
                               }
                               setChatApplication(app);
                             }}
+                            title={app.ownerId ? "Click to chat with job owner" : "Owner information not available"}
                           >
-                            💬 Chat
+                            {app.ownerId ? "💬 Chat with Owner" : "⚠️ Chat Unavailable"}
                           </button>
                           <button
                             className="route-btn"
@@ -497,7 +598,7 @@ const WorkerDashboard = () => {
                           >
                             🗺️ Route to Owner
                           </button>
-                        </>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -560,6 +661,20 @@ const WorkerDashboard = () => {
               type="text"
               name="contact"
               value={workerProfile.contact}
+              onChange={handleProfileChange}
+            />
+            <label>Age</label>
+            <input
+              type="number"
+              name="age"
+              value={workerProfile.age}
+              onChange={handleProfileChange}
+            />
+            <label>Experience (years)</label>
+            <input
+              type="number"
+              name="experienceYears"
+              value={workerProfile.experienceYears}
               onChange={handleProfileChange}
             />
             <label>Pincode</label>

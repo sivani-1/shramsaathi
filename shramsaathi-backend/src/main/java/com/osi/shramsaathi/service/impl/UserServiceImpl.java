@@ -23,6 +23,11 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserResponse register(UserRequest request) {
+        // Generate a default password if not provided
+        String password = request.getPassword() != null && !request.getPassword().isEmpty() 
+            ? request.getPassword() 
+            : "worker123"; // Default password
+        
         User user = User.builder()
                 .name(request.getName())
                 .phone(request.getPhone())
@@ -30,10 +35,13 @@ public class UserServiceImpl implements UserService {
                 .workType(request.getWorkType())
                 .district(request.getDistrict())
                 .mandal(request.getMandal())
-        .pincode(request.getPincode())
-        .area(request.getArea())
-        .colony(request.getColony())
-        .state(request.getState())
+                .pincode(request.getPincode())
+                .area(request.getArea())
+                .colony(request.getColony())
+                .state(request.getState())
+                .age(request.getAge())
+                .experienceYears(request.getExperienceYears())
+                .password(password)
                 .registered(true)
                 .build();
 
@@ -71,6 +79,8 @@ public class UserServiceImpl implements UserService {
                 .colony(user.getColony())
                 .state(user.getState())
                 .registered(user.getRegistered())
+                .age(user.getAge())
+                .experienceYears(user.getExperienceYears())
                 .build();
     }
 }

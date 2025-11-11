@@ -36,6 +36,9 @@ public class UserRequest {
     private String area;
     private String colony;
     private String state;
+    private Integer age;
+    private Integer experienceYears;
+    private String password; // Add password field
 }
 // This is the UserRequest class, which is used to create a new user.
 // It uses Lombok to generate the getters, setters, constructor, and builder methods.

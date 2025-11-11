@@ -22,6 +22,8 @@ public class UserResponse {
     private String area;
     private String colony;
     private String state;
+    private Integer age;
+    private Integer experienceYears;
 }
 // This is the UserResponse class, which is used to send the user data to the client.
 // It uses Lombok to generate the getters, setters, constructor, and builder methods.

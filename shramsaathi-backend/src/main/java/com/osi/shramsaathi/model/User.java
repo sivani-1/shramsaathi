@@ -50,6 +50,9 @@ public class User {
     private String area;
     private String colony;
     private String state;
+    // Optional personal fields
+    private Integer age;
+    private Integer experienceYears;
 
     //  Use @Builder.Default so Lombok keeps the default value when using .builder()
     @Builder.Default
