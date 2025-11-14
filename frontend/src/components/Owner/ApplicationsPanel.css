@@ -246,6 +246,33 @@
   box-shadow: 0 6px 18px rgba(59,130,246,0.18);
 }
 
+.filter-row .search-btn {
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.filter-row .search-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(59,130,246,0.18);
+}
+
+.filter-row .clear-btn {
+  padding: 6px 10px;
+  background: transparent;
+  color: #2563eb;
+  border: 1px solid #c7ddff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.filter-row .clear-btn:hover {
+  background: #eff6ff;
+}
+
 /* 🧩 Empty State */
 .empty-msg {
   font-style: italic;
